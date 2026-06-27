@@ -25,6 +25,9 @@ jobs:
       - name: Run typecheck
         run: npm run typecheck
 
+      - name: Run build
+        run: npm run build
+
       - name: Check env template
         run: |
           if [ ! -f .env.local.example ]; then
