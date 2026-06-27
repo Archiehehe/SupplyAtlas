@@ -1,0 +1,40 @@
+name: Refresh Data
+
+on:
+  schedule:
+    # TODO: Configure schedule as needed
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    # TODO: Uncomment and configure when secrets are set up
+    # if: ${{ secrets.FMP_API_KEY != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up environment
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+          echo "DIRECT_DATABASE_URL=${{ secrets.DIRECT_DATABASE_URL }}" >> $GITHUB_ENV
+          echo "FMP_API_KEY=${{ secrets.FMP_API_KEY }}" >> $GITHUB_ENV
+          echo "FINNHUB_API_KEY=${{ secrets.FINNHUB_API_KEY }}" >> $GITHUB_ENV
+          # TODO: Add other required secrets here
+
+      - name: Run ingestion scripts
+        run: |
+          # TODO: Uncomment and configure ingestion scripts as needed
+          # npm run ingest:companies
+          # npm run ingest:market-data
+          echo "Ingestion scripts disabled pending configuration"
