@@ -5,13 +5,6 @@ const databaseEnvSchema = z.object({
   DIRECT_DATABASE_URL: z.string().min(1),
 });
 
-const authEnvSchema = z.object({
-  BETTER_AUTH_SECRET: z.string().min(1),
-  BETTER_AUTH_URL: z.string().url(),
-  GITHUB_CLIENT_ID: z.string().min(1),
-  GITHUB_CLIENT_SECRET: z.string().min(1),
-});
-
 const runtimeProviderEnvSchema = z.object({
   FMP_API_KEY: z.string().min(1),
   FINNHUB_API_KEY: z.string().min(1),
@@ -48,12 +41,17 @@ const optionalEnvSchema = z.object({
 });
 
 export type DatabaseEnv = z.infer<typeof databaseEnvSchema>;
-export type AuthEnv = z.infer<typeof authEnvSchema>;
 export type RuntimeProviderEnv = z.infer<typeof runtimeProviderEnvSchema>;
 export type IngestionEnv = z.infer<typeof ingestionEnvSchema>;
 export type OptionalEnv = z.infer<typeof optionalEnvSchema>;
 
-function validateEnv<T extends z.ZodTypeAny>(schema: T, env: Record<string, string | undefined>) {
+function validateEnvOrNull<T extends z.ZodTypeAny>(schema: T, env: Record<string, string | undefined>) {
+  const result = schema.safeParse(env);
+  if (!result.success) return null;
+  return result.data;
+}
+
+function validateEnvOrThrow<T extends z.ZodTypeAny>(schema: T, env: Record<string, string | undefined>): T["_output"] {
   const result = schema.safeParse(env);
   if (!result.success) {
     const missing = result.error.issues.map(issue => issue.path.join("."));
@@ -62,35 +60,22 @@ function validateEnv<T extends z.ZodTypeAny>(schema: T, env: Record<string, stri
   return result.data;
 }
 
-export function getDatabaseEnv(): DatabaseEnv {
-  return validateEnv(databaseEnvSchema, process.env);
-}
-
-export function getAuthEnv(): AuthEnv {
-  return validateEnv(authEnvSchema, process.env);
+export function getDatabaseEnv(): DatabaseEnv | null {
+  return validateEnvOrNull(databaseEnvSchema, process.env);
 }
 
 export function getRuntimeProviderEnv(): RuntimeProviderEnv {
-  return validateEnv(runtimeProviderEnvSchema, process.env);
+  return validateEnvOrThrow(runtimeProviderEnvSchema, process.env);
 }
 
 export function getIngestionEnv(): IngestionEnv {
-  return validateEnv(ingestionEnvSchema, process.env);
+  return validateEnvOrThrow(ingestionEnvSchema, process.env);
 }
 
-export function getOptionalEnv(): OptionalEnv {
-  return validateEnv(optionalEnvSchema, process.env);
+export function getOptionalEnv(): OptionalEnv | null {
+  return validateEnvOrNull(optionalEnvSchema, process.env);
 }
 
 export function isDatabaseConfigured(): boolean {
   return !!process.env.DATABASE_URL;
-}
-
-export function isAuthConfigured(): boolean {
-  return !!(
-    process.env.BETTER_AUTH_SECRET &&
-    process.env.BETTER_AUTH_URL &&
-    process.env.GITHUB_CLIENT_ID &&
-    process.env.GITHUB_CLIENT_SECRET
-  );
 }

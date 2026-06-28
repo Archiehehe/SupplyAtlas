@@ -19,24 +19,12 @@
 - Does not require a key for direct EDGAR access
 - Requires a real `SEC_USER_AGENT` and `SEC_CONTACT_EMAIL`
 
-### Better Auth
-- Needs a strong, unique secret
-- Generate using a secure random string generator
-
-### GitHub OAuth
-- Needs exact redirect URLs configured in GitHub OAuth App settings
-- Redirect URL format: `{BETTER_AUTH_URL}/api/auth/callback/github`
-
 ## Secret Placement Table
 
 | Secret                | Local .env.local | Netlify | GitHub Actions | Purpose                     |
 |-----------------------|-------------------|---------|----------------|-----------------------------|
 | DATABASE_URL          | yes               | yes     | yes            | Runtime DB connection       |
 | DIRECT_DATABASE_URL   | yes               | no      | yes            | Drizzle migrations          |
-| BETTER_AUTH_SECRET    | yes               | yes     | no             | Auth signing secret         |
-| BETTER_AUTH_URL       | yes               | yes     | no             | Auth base URL               |
-| GITHUB_CLIENT_ID      | yes               | yes     | no             | GitHub OAuth                |
-| GITHUB_CLIENT_SECRET  | yes               | yes     | no             | GitHub OAuth                |
 | FMP_API_KEY           | yes               | yes     | yes            | Market/fundamental data     |
 | FINNHUB_API_KEY       | yes               | yes     | yes            | Backup market/fundamental data |
 | ALPHA_VANTAGE_API_KEY | yes               | optional| yes            | Historical prices/news backup |

@@ -4,9 +4,6 @@
 |------------------------|-----------------------------------------------------|------------------------|---------------------------|--------|---------------|----------------------------------------|
 | Neon                   | Create Neon Postgres project                       | DATABASE_URL           | .env.local, Netlify, GH  |        |               | Pooled connection for runtime          |
 | Neon                   | Get direct connection URL                           | DIRECT_DATABASE_URL    | .env.local, GH            |        |               | Direct connection for migrations       |
-| Better Auth secret     | Generate strong random string                       | BETTER_AUTH_SECRET     | .env.local, Netlify       |        |               | Use secure random generator            |
-| GitHub OAuth          | Create GitHub OAuth App                       | GITHUB_CLIENT_ID       | .env.local, Netlify       |        |               | Set callback URL to /api/auth/callback/github |
-| GitHub OAuth          | Create GitHub OAuth App                       | GITHUB_CLIENT_SECRET   | .env.local, Netlify       |        |               | Set callback URL to /api/auth/callback/github |
 | FMP                    | Create Financial Modeling Prep account              | FMP_API_KEY            | .env.local, Netlify, GH   |        |               |                                        |
 | Finnhub                | Create Finnhub account                              | FINNHUB_API_KEY        | .env.local, Netlify, GH   |        |               |                                        |
 | Alpha Vantage          | Create Alpha Vantage account                        | ALPHA_VANTAGE_API_KEY  | .env.local, GH            |        |               |                                        |

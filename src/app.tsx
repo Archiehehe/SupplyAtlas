@@ -19,12 +19,6 @@ export default function App() {
                   <a href="/themes" class="text-gray-700 hover:text-blue-600">
                     Themes
                   </a>
-                  <a href="/watchlist" class="text-gray-700 hover:text-blue-600">
-                    Watchlist
-                  </a>
-                  <a href="/admin" class="text-gray-700 hover:text-blue-600">
-                    Admin
-                  </a>
                 </div>
               </div>
             </div>

@@ -1,27 +1,30 @@
 # SupplyAtlas
 
-## Product
-A production investment exposure graph platform for mapping companies, supply chains, customers, suppliers, technologies, ETFs, countries, risks, catalysts, filings, transcripts, insider activity, and portfolio exposure.
+A public read-only research database for mapping investment exposure across supply chains, companies, technologies, and markets.
 
-## Locked Stack
+## Stack
+
 - SolidStart
 - Netlify
 - Neon Postgres
 - Drizzle ORM
-- Better Auth
-- Sigma.js / Cytoscape.js later
-- GitHub Actions cron
 - TypeScript
 - Zod
 
 ## Setup
+
 ```bash
 npm install
 cp .env.local.example .env.local
-npm run check:env
+npm run check:env database
 npm run dev
 npm run build
 ```
 
+Netlify deployment only needs `DATABASE_URL` in environment variables.
+
+Data enters through ingestion scripts, imports, or direct database migration workflows.
+
 ## Important
+
 Never commit `.env.local` or real secrets.
