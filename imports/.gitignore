@@ -1,0 +1,7 @@
+# Ignore data in incoming, processed, rejected (but keep .gitkeep)
+incoming/*
+!incoming/.gitkeep
+processed/*
+!processed/.gitkeep
+rejected/*
+!rejected/.gitkeep

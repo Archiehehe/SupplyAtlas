@@ -21,7 +21,9 @@
     "ingest:insiders": "tsx scripts/ingestion/ingest-insiders.ts",
     "ingest:etf-holdings": "tsx scripts/ingestion/ingest-etf-holdings.ts",
     "ingest:relationships": "tsx scripts/ingestion/extract-relationships.ts",
-    "ingest:theme": "tsx scripts/ingestion/refresh-theme.ts"
+    "ingest:theme": "tsx scripts/ingestion/refresh-theme.ts",
+    "import:validate": "tsx scripts/validate-import.ts",
+    "import:data": "tsx scripts/import-supplyatlas-data.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
