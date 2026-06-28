@@ -10,7 +10,7 @@ export default function App() {
           <div class="flex justify-between h-16">
             <div class="flex items-center">
               <A href="/" class="text-xl font-bold text-blue-600">
-                ExposureGraph
+                SupplyAtlas
               </A>
             </div>
             <div class="flex items-center space-x-4">

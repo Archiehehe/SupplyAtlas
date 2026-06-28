@@ -1,4 +1,4 @@
-# Secrets Management for ExposureGraph
+# Secrets Management for SupplyAtlas
 
 ## Critical Rules
 
@@ -23,9 +23,9 @@
 - Needs a strong, unique secret
 - Generate using a secure random string generator
 
-### Google OAuth
-- Needs exact redirect URLs configured in Google Cloud Console
-- Redirect URL format: `{BETTER_AUTH_URL}/api/auth/callback/google`
+### GitHub OAuth
+- Needs exact redirect URLs configured in GitHub OAuth App settings
+- Redirect URL format: `{BETTER_AUTH_URL}/api/auth/callback/github`
 
 ## Secret Placement Table
 
@@ -35,8 +35,8 @@
 | DIRECT_DATABASE_URL   | yes               | no      | yes            | Drizzle migrations          |
 | BETTER_AUTH_SECRET    | yes               | yes     | no             | Auth signing secret         |
 | BETTER_AUTH_URL       | yes               | yes     | no             | Auth base URL               |
-| GOOGLE_CLIENT_ID      | yes               | yes     | no             | Google OAuth                |
-| GOOGLE_CLIENT_SECRET  | yes               | yes     | no             | Google OAuth                |
+| GITHUB_CLIENT_ID      | yes               | yes     | no             | GitHub OAuth                |
+| GITHUB_CLIENT_SECRET  | yes               | yes     | no             | GitHub OAuth                |
 | FMP_API_KEY           | yes               | yes     | yes            | Market/fundamental data     |
 | FINNHUB_API_KEY       | yes               | yes     | yes            | Backup market/fundamental data |
 | ALPHA_VANTAGE_API_KEY | yes               | optional| yes            | Historical prices/news backup |

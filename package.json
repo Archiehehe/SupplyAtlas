@@ -1,5 +1,5 @@
 {
-  "name": "exposuregraph",
+  "name": "supplyatlas",
   "type": "module",
   "scripts": {
     "dev": "vinxi dev",

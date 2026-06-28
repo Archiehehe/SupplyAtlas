@@ -8,8 +8,8 @@ const databaseEnvSchema = z.object({
 const authEnvSchema = z.object({
   BETTER_AUTH_SECRET: z.string().min(1),
   BETTER_AUTH_URL: z.string().url(),
-  GOOGLE_CLIENT_ID: z.string().min(1),
-  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  GITHUB_CLIENT_ID: z.string().min(1),
+  GITHUB_CLIENT_SECRET: z.string().min(1),
 });
 
 const runtimeProviderEnvSchema = z.object({
@@ -90,7 +90,7 @@ export function isAuthConfigured(): boolean {
   return !!(
     process.env.BETTER_AUTH_SECRET &&
     process.env.BETTER_AUTH_URL &&
-    process.env.GOOGLE_CLIENT_ID &&
-    process.env.GOOGLE_CLIENT_SECRET
+    process.env.GITHUB_CLIENT_ID &&
+    process.env.GITHUB_CLIENT_SECRET
   );
 }

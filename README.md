@@ -1,4 +1,4 @@
-# ExposureGraph
+# SupplyAtlas
 
 ## Product
 A production investment exposure graph platform for mapping companies, supply chains, customers, suppliers, technologies, ETFs, countries, risks, catalysts, filings, transcripts, insider activity, and portfolio exposure.

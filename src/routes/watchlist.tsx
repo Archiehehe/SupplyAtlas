@@ -25,8 +25,8 @@ export default function Watchlist() {
       <Suspense fallback={<p>Loading...</p>}>
         {!isAuthConfigured() ? (
           <p class="text-gray-600">
-            Auth is not configured. Set BETTER_AUTH_SECRET, BETTER_AUTH_URL, GOOGLE_CLIENT_ID, and
-            GOOGLE_CLIENT_SECRET in .env.local to enable authentication.
+            Auth is not configured. Set BETTER_AUTH_SECRET, BETTER_AUTH_URL, GITHUB_CLIENT_ID, and
+            GITHUB_CLIENT_SECRET in .env.local to enable authentication.
           </p>
         ) : !isDatabaseConfigured() ? (
           <p class="text-gray-600">
