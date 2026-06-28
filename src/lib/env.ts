@@ -83,7 +83,7 @@ export function getOptionalEnv(): OptionalEnv {
 }
 
 export function isDatabaseConfigured(): boolean {
-  return !!(process.env.DATABASE_URL && process.env.DIRECT_DATABASE_URL);
+  return !!process.env.DATABASE_URL;
 }
 
 export function isAuthConfigured(): boolean {

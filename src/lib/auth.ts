@@ -9,39 +9,45 @@ let auth: ReturnType<typeof betterAuth> | null = null;
 if (isAuthConfigured()) {
   const db = getDb();
   if (db) {
-    auth = betterAuth({
-      database: drizzleAdapter(db, {
-        provider: "pg",
-        usePlural: true,
-        schema: {
-          users,
-          sessions,
-          accounts,
-          verifications,
+    try {
+      auth = betterAuth({
+        database: drizzleAdapter(db, {
+          provider: "pg",
+          usePlural: true,
+          schema: {
+            users,
+            sessions,
+            accounts,
+            verifications,
+          },
+        }),
+        emailAndPassword: {
+          enabled: true,
         },
-      }),
-      emailAndPassword: {
-        enabled: true,
-      },
-      socialProviders: {
-        github: {
-          clientId: process.env.GITHUB_CLIENT_ID!,
-          clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-        },
-      },
-      secret: process.env.BETTER_AUTH_SECRET!,
-      baseURL: process.env.BETTER_AUTH_URL!,
-      user: {
-        additionalFields: {
-          role: {
-            type: "string",
-            required: false,
-            defaultValue: "user",
-            input: false,
+        socialProviders: {
+          github: {
+            clientId: process.env.GITHUB_CLIENT_ID!,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET!,
           },
         },
-      },
-    });
+        secret: process.env.BETTER_AUTH_SECRET!,
+        baseURL: process.env.BETTER_AUTH_URL!,
+        user: {
+          additionalFields: {
+            role: {
+              type: "string",
+              required: false,
+              defaultValue: "user",
+              input: false,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Auth initialization failed:", error instanceof Error ? error.message : "Unknown error");
+    }
+  } else {
+    console.error("Auth initialization skipped: database not available");
   }
 }
 
