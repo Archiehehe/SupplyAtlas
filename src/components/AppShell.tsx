@@ -8,6 +8,7 @@ export function AppShell(props: { children: JSX.Element }) {
           <a href="/" class="app-nav-brand">SupplyAtlas</a>
           <div class="app-nav-links">
             <a href="/themes">Themes</a>
+            <a href="/portfolio">Portfolio</a>
           </div>
         </div>
       </nav>

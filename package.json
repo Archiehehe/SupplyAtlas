@@ -25,7 +25,9 @@
     "import:validate": "tsx scripts/validate-import.ts",
     "import:data": "tsx scripts/import-supplyatlas-data.ts",
     "portfolio:pnl": "tsx scripts/preview-portfolio-pnl.ts",
-    "portfolio:pnl:check": "tsx scripts/check-portfolio-pnl-formulas.ts"
+    "portfolio:pnl:check": "tsx scripts/check-portfolio-pnl-formulas.ts",
+    "audit:test-records": "tsx scripts/audit-test-records.ts",
+    "cleanup:test-records": "tsx scripts/cleanup-test-records.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",

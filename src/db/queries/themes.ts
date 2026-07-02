@@ -1,12 +1,12 @@
 import { getDb } from "../client";
 import { themes, nodes, edges, edgeEvidence, sourceDocuments } from "../schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 export async function getAllThemes() {
   const db = getDb();
   if (!db) return [];
-  return await db.select().from(themes).orderBy(themes.name);
+  return await db.select().from(themes).where(eq(themes.type, "thematic")).orderBy(themes.name);
 }
 
 export async function getThemeBySlug(slug: string) {

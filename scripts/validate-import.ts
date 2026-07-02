@@ -116,6 +116,9 @@ function validateBatch(batchDir: string): ValidationReport {
       if (row.type && !["sector", "thematic", "regulatory", "other"].includes(row.type)) {
         report.errors.push({ file: "themes.csv", row: rowNum, field: "type", message: "Type must be one of: sector, thematic, regulatory, other", value: row.type });
       }
+      if (row.slug && /(portfolio-test|test-portfolio|^demo$|^mock$|sandbox)/.test(row.slug)) {
+        report.warnings.push(`Theme row ${rowNum}: Slug "${row.slug}" looks like test/sandbox data. This will appear in /themes.`);
+      }
     });
   }
 

@@ -204,6 +204,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .hero p { font-size: 1.125rem; color: var(--text-secondary); max-width: 560px; line-height: 1.6; }
 .hero-actions { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
 
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 40px 0; }
+.stat-card { text-align: center; padding: 24px 16px; }
+.stat-value { font-size: 1.75rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.stat-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-tertiary); margin-top: 4px; }
+
 /* Workflow cards grid */
 .workflow-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin: 40px 0; }
 .workflow-card { padding: 24px; }
