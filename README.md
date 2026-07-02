@@ -5,7 +5,7 @@ A public read-only research database for mapping investment exposure across supp
 ## Stack
 
 - SolidStart
-- Netlify
+- Vercel
 - Neon Postgres
 - Drizzle ORM
 - TypeScript
@@ -21,7 +21,7 @@ npm run dev
 npm run build
 ```
 
-Netlify deployment only needs `DATABASE_URL` in environment variables.
+Vercel deployment only needs `DATABASE_URL` in environment variables.
 
 Data enters through controlled CSV import scripts — not browser forms.
 
@@ -50,3 +50,9 @@ Import requires `DIRECT_DATABASE_URL` in `.env.local`.
 - The app is fully public and read-only.
 - Never commit `.env.local` or real secrets.
 - Never commit real import data — batch directories are gitignored.
+
+## Portfolio P&L Analytics
+
+The portfolio module answers which themes and subthemes drive portfolio returns. Two P&L modes are supported: period-based and since-buy lifetime.
+
+See [docs/PORTFOLIO_PNL.md](docs/PORTFOLIO_PNL.md) for formulas, routes, CLI usage, and data requirements.

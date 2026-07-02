@@ -5,7 +5,7 @@
 1. **Never paste real API keys into AI chat**
 2. **Rotate any exposed keys immediately**
 3. `.env.local` is local only - never commit it
-4. Netlify environment variables are for app runtime
+4. Vercel environment variables are for app runtime
 5. GitHub Actions secrets are for ingestion, migrations, and cron jobs
 
 ## Connection Types
@@ -21,7 +21,7 @@
 
 ## Secret Placement Table
 
-| Secret                | Local .env.local | Netlify | GitHub Actions | Purpose                     |
+| Secret                | Local .env.local | Vercel  | GitHub Actions | Purpose                     |
 |-----------------------|-------------------|---------|----------------|-----------------------------|
 | DATABASE_URL          | yes               | yes     | yes            | Runtime DB connection       |
 | DIRECT_DATABASE_URL   | yes               | no      | yes            | Drizzle migrations          |
