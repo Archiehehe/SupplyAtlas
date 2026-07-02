@@ -35,7 +35,7 @@ body {
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: var(--accent-hover); text-decoration: underline; }
-code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: .85em; padding: 1px 4px; background: var(--bg-tertiary); border-radius: var(--radius-sm); color: var(--text-secondary); }
+code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: .85em; padding: 1px 5px; background: var(--bg-tertiary); border-radius: var(--radius-sm); color: var(--text-primary); border: 1px solid var(--border-light); }
 
 /* Layout */
 .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
@@ -410,6 +410,55 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .position-contribution-table th,
 .position-contribution-table td {
   font-variant-numeric: tabular-nums;
+}
+
+/* Stage status panel */
+.stage-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.stage-panel-row {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: .875rem;
+}
+.stage-panel-label {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  min-width: 100px;
+}
+.stage-panel-value {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+/* Error panel */
+.error-panel {
+  background: rgba(248,81,73,.1);
+  border: 1px solid var(--accent-red);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.error-panel h3 {
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--accent-red);
+  margin-bottom: 8px;
+}
+.error-panel p {
+  font-size: .8rem;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+/* Compact upload for homepage */
+.upload-section-compact .upload-card {
+  padding: 32px 24px;
 }
 
 /* Portfolio upload */

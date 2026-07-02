@@ -2,6 +2,7 @@ import { createAsync, query } from "@solidjs/router";
 import { Suspense } from "solid-js";
 import { isDatabaseConfigured } from "../lib/env";
 import { EmptyState } from "../components/EmptyState";
+import PortfolioUploadAnalyzer from "../components/portfolio/PortfolioUploadAnalyzer";
 
 const loadStats = query(async () => {
   const { getDb } = await import("../db/client");
@@ -31,13 +32,11 @@ export default function Home() {
   return (
     <div>
       <section class="hero">
-        <h1>Start with a holdings CSV. SupplyAtlas maps your tickers to investment themes, subthemes, companies, relationships, and evidence.</h1>
-        <p>Upload a portfolio to see live exposure analysis from the SupplyAtlas research graph &mdash; or browse coverage areas below.</p>
-        <div class="hero-actions">
-          <a href="/portfolio" class="btn btn-primary btn-lg">Upload portfolio</a>
-          <a href="/themes" class="btn btn-lg">Browse themes</a>
-        </div>
+        <h1>Upload a Seeking Alpha portfolio CSV. SupplyAtlas maps your tickers to investment themes, subthemes, companies, relationships, and evidence.</h1>
+        <p>Export your portfolio from Seeking Alpha (<code>symbol, quantity, cost, date</code>), upload it here, and see live exposure analysis from the SupplyAtlas research graph.</p>
       </section>
+
+      <PortfolioUploadAnalyzer compact={true} />
 
       {!isDatabaseConfigured() ? (
         <EmptyState
@@ -45,47 +44,55 @@ export default function Home() {
           description="Set DATABASE_URL in your environment to connect SupplyAtlas to a Postgres database."
         />
       ) : (
-        <Suspense fallback={<div class="p-8 skeleton skeleton-card" />}>
-          {stats() ? (
-            <>
-              <div class="section-label">Database Coverage</div>
-              <div class="stats-grid">
-                <div class="card stat-card">
-                  <div class="stat-value">{stats()!.themes}</div>
-                  <div class="stat-label">Themes</div>
-                </div>
-                <div class="card stat-card">
-                  <div class="stat-value">{stats()!.companies}</div>
-                  <div class="stat-label">Companies</div>
-                </div>
-                <div class="card stat-card">
-                  <div class="stat-value">{stats()!.nodes}</div>
-                  <div class="stat-label">Nodes</div>
-                </div>
-                <div class="card stat-card">
-                  <div class="stat-value">{stats()!.edges}</div>
-                  <div class="stat-label">Relationships</div>
-                </div>
-                <div class="card stat-card">
-                  <div class="stat-value">{stats()!.documents}</div>
-                  <div class="stat-label">Source Documents</div>
-                </div>
-                <div class="card stat-card">
-                  <div class="stat-value">{stats()!.evidence}</div>
-                  <div class="stat-label">Evidence Items</div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <EmptyState
-              title="Could not load database stats"
-              description="The database query returned no results."
-            />
-          )}
-        </Suspense>
+        <>
+          <div style="margin-top: 48px;">
+            <Suspense fallback={<div class="p-8 skeleton skeleton-card" />}>
+              {stats() ? (
+                <>
+                  <div class="section-label">Database Coverage</div>
+                  <div class="stats-grid">
+                    <div class="card stat-card">
+                      <div class="stat-value">{stats()!.themes}</div>
+                      <div class="stat-label">Themes</div>
+                    </div>
+                    <div class="card stat-card">
+                      <div class="stat-value">{stats()!.companies}</div>
+                      <div class="stat-label">Companies</div>
+                    </div>
+                    <div class="card stat-card">
+                      <div class="stat-value">{stats()!.nodes}</div>
+                      <div class="stat-label">Nodes</div>
+                    </div>
+                    <div class="card stat-card">
+                      <div class="stat-value">{stats()!.edges}</div>
+                      <div class="stat-label">Relationships</div>
+                    </div>
+                    <div class="card stat-card">
+                      <div class="stat-value">{stats()!.documents}</div>
+                      <div class="stat-label">Source Documents</div>
+                    </div>
+                    <div class="card stat-card">
+                      <div class="stat-value">{stats()!.evidence}</div>
+                      <div class="stat-label">Evidence Items</div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <EmptyState
+                  title="Could not load database stats"
+                  description="The database query returned no results."
+                />
+              )}
+            </Suspense>
+          </div>
+          <div class="hero-actions" style="margin-top: 32px;">
+            <a href="/portfolio" class="btn btn-lg">Full portfolio page</a>
+            <a href="/themes" class="btn btn-lg">Browse themes</a>
+          </div>
+        </>
       )}
 
-      <div class="workflow-grid">
+      <div class="workflow-grid" style="margin-top: 48px;">
         <div class="card workflow-card">
           <div class="workflow-card-icon">&#9733;</div>
           <div class="workflow-card-title">Themes</div>

@@ -1,46 +1,30 @@
-export interface ParsedHolding {
-  ticker: string;
-  shares: number;
-  marketValue: number;
-  costBasis: number | null;
-  averageCost: number | null;
-  name: string | null;
-  sector: string | null;
-  rowErrors: string[];
+export interface UploadedLot {
+  rowNumber: number;
+  symbol: string;
+  quantity: number;
+  cost: number;
+  date: string;
+}
+
+export interface AggregatedHolding {
+  symbol: string;
+  totalQuantity: number;
+  totalCostBasis: number;
+  averageCost: number;
+  lotCount: number;
+  firstBuyDate: string | null;
+  lastBuyDate: string | null;
 }
 
 export interface ParseResult {
-  holdings: ParsedHolding[];
+  lots: UploadedLot[];
+  holdings: AggregatedHolding[];
+  warnings: string[];
   errors: string[];
-  totalMarketValue: number;
+  totalCostBasis: number;
 }
 
-const HEADER_ALIASES: Record<string, string> = {
-  symbol: "ticker",
-  quantity: "shares",
-  qty: "shares",
-  "market value": "market_value",
-  market_value: "market_value",
-  current_value: "market_value",
-  value: "market_value",
-  cost_basis: "cost_basis",
-  cost: "cost_basis",
-  total_cost: "cost_basis",
-  avg_cost: "average_cost",
-  average_cost: "average_cost",
-};
-
-function normalizeHeader(raw: string): string {
-  const cleaned = raw.replace(/['"\s]+/g, " ").trim().toLowerCase().replace(/\s+/g, "_");
-  const withoutUnderscore = raw.trim().toLowerCase().replace(/\s+/g, " ");
-  return HEADER_ALIASES[cleaned] ?? HEADER_ALIASES[withoutUnderscore] ?? cleaned;
-}
-
-function parseCurrency(raw: string): number {
-  const cleaned = raw.replace(/^[\s$€£¥]*/, "").replace(/[\s$€£¥]*$/, "").replace(/,/g, "");
-  const val = parseFloat(cleaned);
-  return isNaN(val) ? 0 : val;
-}
+const KNOWN_COLUMNS = ["symbol", "quantity", "cost", "date"] as const;
 
 function tryParseRow(lines: string[], rowStart: number): { cols: string[]; rowEnd: number } | null {
   let inQuotes = false;
@@ -73,6 +57,34 @@ function tryParseRow(lines: string[], rowStart: number): { cols: string[]; rowEn
   return { cols, rowEnd };
 }
 
+function parseCurrency(raw: string): number {
+  const cleaned = raw.replace(/^[\s$€£¥]*/, "").replace(/[\s$€£¥]*$/, "").replace(/,/g, "");
+  const val = parseFloat(cleaned);
+  return isNaN(val) ? 0 : val;
+}
+
+function normalizeHeader(raw: string): string {
+  const cleaned = raw.trim().toLowerCase().replace(/\s+/g, " ");
+  const aliasMap: Record<string, string> = {
+    symbol: "symbol",
+    ticker: "symbol",
+    quantity: "quantity",
+    qty: "quantity",
+    shares: "quantity",
+    cost: "cost",
+    cost_basis: "cost",
+    total_cost: "cost",
+    price: "cost",
+    avg_cost: "cost",
+    average_cost: "cost",
+    date: "date",
+    "purchase date": "date",
+    "buy date": "date",
+    acquired: "date",
+  };
+  return aliasMap[cleaned] ?? cleaned;
+}
+
 export function parseUploadedPortfolioCSV(text: string): ParseResult {
   const rawLines = text.split("\n");
   const lines: string[] = [];
@@ -84,32 +96,39 @@ export function parseUploadedPortfolioCSV(text: string): ParseResult {
   }
 
   if (lines.length < 2) {
-    return { holdings: [], errors: ["CSV must have a header row and at least one data row."], totalMarketValue: 0 };
+    return { lots: [], holdings: [], warnings: [], errors: ["CSV must have a header row and at least one data row."], totalCostBasis: 0 };
   }
 
   const headerResult = tryParseRow(lines, 0);
   if (!headerResult) {
-    return { holdings: [], errors: ["Could not parse CSV header row."], totalMarketValue: 0 };
+    return { lots: [], holdings: [], warnings: [], errors: ["Could not parse CSV header row."], totalCostBasis: 0 };
   }
 
   const headers = headerResult.cols.map(normalizeHeader);
-  const tickerIdx = headers.indexOf("ticker");
-  const sharesIdx = headers.indexOf("shares");
-  const marketValueIdx = headers.indexOf("market_value");
-  const costBasisIdx = headers.indexOf("cost_basis");
-  const averageCostIdx = headers.indexOf("average_cost");
-  const nameIdx = headers.indexOf("name");
-  const sectorIdx = headers.indexOf("sector");
+  const symIdx = headers.indexOf("symbol");
+  const qtyIdx = headers.indexOf("quantity");
+  const costIdx = headers.indexOf("cost");
+  const dateIdx = headers.indexOf("date");
 
-  if (tickerIdx === -1) {
-    return { holdings: [], errors: ["CSV must have a 'ticker' column (also accepts 'symbol')."], totalMarketValue: 0 };
+  const foundCols: string[] = [];
+  if (symIdx !== -1) foundCols.push("symbol");
+  if (qtyIdx !== -1) foundCols.push("quantity");
+  if (costIdx !== -1) foundCols.push("cost");
+  if (dateIdx !== -1) foundCols.push("date");
+
+  if (symIdx === -1 || qtyIdx === -1 || costIdx === -1 || dateIdx === -1) {
+    const missing = KNOWN_COLUMNS.filter((c) => !foundCols.includes(c));
+    return { lots: [], holdings: [], warnings: [], errors: [
+      `CSV must include these columns: ${KNOWN_COLUMNS.join(", ")}. Missing: ${missing.join(", ")}.`,
+      `Found headers: ${headers.join(", ") || "(none)"}`,
+    ], totalCostBasis: 0 };
   }
 
   let lineNum = headerResult.rowEnd;
-  const holdings: ParsedHolding[] = [];
+  const lots: UploadedLot[] = [];
+  const warnings: string[] = [];
   const errors: string[] = [];
-  let totalMarketValue = 0;
-  let tickerCount = 0;
+  let rowIndex = 0;
 
   while (lineNum < lines.length) {
     const blank = lines[lineNum].trim();
@@ -119,55 +138,95 @@ export function parseUploadedPortfolioCSV(text: string): ParseResult {
     if (!result) { lineNum++; continue; }
 
     const { cols, rowEnd } = result;
-    const rowIndex = holdings.length + 1;
+    rowIndex++;
 
-    if (cols.length <= tickerIdx) {
-      errors.push(`Row ${rowIndex}: missing ticker column, skipping.`);
+    if (cols.length <= Math.max(symIdx, qtyIdx, costIdx, dateIdx)) {
+      errors.push(`Row ${rowIndex}: too few columns, skipping.`);
       lineNum = rowEnd;
       continue;
     }
 
-    const rawTicker = cols[tickerIdx] || "";
-    const ticker = rawTicker.toUpperCase().trim();
-    if (!ticker) {
-      errors.push(`Row ${rowIndex}: empty ticker value, skipping.`);
+    const rawSymbol = (cols[symIdx] || "").toUpperCase().trim();
+    if (!rawSymbol) {
+      errors.push(`Row ${rowIndex}: empty symbol, skipping.`);
       lineNum = rowEnd;
       continue;
     }
 
-    const rowErrors: string[] = [];
-    const shares = sharesIdx !== -1 && cols[sharesIdx]
-      ? parseCurrency(cols[sharesIdx])
-      : 0;
-    if (sharesIdx !== -1 && cols[sharesIdx] && (isNaN(shares) || shares < 0)) {
-      rowErrors.push(`Row ${rowIndex}: invalid shares "${cols[sharesIdx]}", treated as 0.`);
+    const rawQty = cols[qtyIdx] || "";
+    const quantity = parseCurrency(rawQty);
+    if (!rawQty || isNaN(quantity) || quantity <= 0) {
+      warnings.push(`Row ${rowIndex}: invalid quantity "${rawQty}" for symbol ${rawSymbol}, skipping.`);
+      lineNum = rowEnd;
+      continue;
     }
 
-    const marketValue = marketValueIdx !== -1 && cols[marketValueIdx]
-      ? parseCurrency(cols[marketValueIdx])
-      : 0;
-    if (marketValueIdx !== -1 && cols[marketValueIdx] && marketValue === 0) {
-      const raw = cols[marketValueIdx].replace(/^[\s$€£¥]*/, "").replace(/[\s$€£¥]*$/, "").replace(/,/g, "");
-      if (raw && raw !== "0" && raw !== "0.00") {
-        rowErrors.push(`Row ${rowIndex}: could not parse market_value "${cols[marketValueIdx]}", treated as 0.`);
-      }
+    const rawCost = cols[costIdx] || "";
+    const cost = parseCurrency(rawCost);
+    if (!rawCost || isNaN(cost) || cost < 0) {
+      warnings.push(`Row ${rowIndex}: invalid cost "${rawCost}" for symbol ${rawSymbol}, skipping.`);
+      lineNum = rowEnd;
+      continue;
     }
 
-    const costBasis = costBasisIdx !== -1 && cols[costBasisIdx]
-      ? parseCurrency(cols[costBasisIdx])
-      : null;
-    const averageCost = averageCostIdx !== -1 && cols[averageCostIdx]
-      ? parseCurrency(cols[averageCostIdx])
-      : null;
-    const name = nameIdx !== -1 ? (cols[nameIdx] || null) : null;
-    const sector = sectorIdx !== -1 ? (cols[sectorIdx] || null) : null;
+    const date = (cols[dateIdx] || "").trim();
+    if (!date) {
+      warnings.push(`Row ${rowIndex}: empty date for symbol ${rawSymbol}, skipping.`);
+      lineNum = rowEnd;
+      continue;
+    }
 
-    totalMarketValue += marketValue;
-    tickerCount++;
-    holdings.push({ ticker, shares, marketValue, costBasis, averageCost, name, sector, rowErrors });
-
+    lots.push({ rowNumber: rowIndex, symbol: rawSymbol, quantity, cost, date });
     lineNum = rowEnd;
   }
 
-  return { holdings, errors, totalMarketValue };
+  if (lots.length === 0) {
+    return { lots: [], holdings: [], warnings, errors: errors.length > 0 ? errors : ["No valid lot rows found in the CSV."], totalCostBasis: 0 };
+  }
+
+  const aggMap = new Map<string, {
+    totalQuantity: number;
+    totalCostBasis: number;
+    lotCount: number;
+    dates: string[];
+  }>();
+
+  for (const lot of lots) {
+    const existing = aggMap.get(lot.symbol);
+    const lotCostBasis = lot.quantity * lot.cost;
+    if (existing) {
+      existing.totalQuantity += lot.quantity;
+      existing.totalCostBasis += lotCostBasis;
+      existing.lotCount++;
+      existing.dates.push(lot.date);
+    } else {
+      aggMap.set(lot.symbol, {
+        totalQuantity: lot.quantity,
+        totalCostBasis: lotCostBasis,
+        lotCount: 1,
+        dates: [lot.date],
+      });
+    }
+  }
+
+  const holdings: AggregatedHolding[] = [];
+  let totalCostBasis = 0;
+
+  for (const [symbol, data] of aggMap) {
+    const sortedDates = [...data.dates].sort();
+    totalCostBasis += data.totalCostBasis;
+    holdings.push({
+      symbol,
+      totalQuantity: Math.round(data.totalQuantity * 10000) / 10000,
+      totalCostBasis: Math.round(data.totalCostBasis * 100) / 100,
+      averageCost: Math.round((data.totalCostBasis / data.totalQuantity) * 100) / 100,
+      lotCount: data.lotCount,
+      firstBuyDate: sortedDates[0] ?? null,
+      lastBuyDate: sortedDates[sortedDates.length - 1] ?? null,
+    });
+  }
+
+  holdings.sort((a, b) => b.totalCostBasis - a.totalCostBasis);
+
+  return { lots, holdings, warnings, errors, totalCostBasis: Math.round(totalCostBasis * 100) / 100 };
 }
