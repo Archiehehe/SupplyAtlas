@@ -383,12 +383,14 @@ export const portfolios = pgTable("portfolios", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  portfolioKey: varchar("portfolio_key", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   idxUserId: index("idx_portfolios_user_id").on(t.userId),
+  idxPortfolioKey: uniqueIndex("idx_portfolios_portfolio_key").on(t.portfolioKey),
 }));
 
 export const portfolioPositions = pgTable("portfolio_positions", {
@@ -407,6 +409,64 @@ export const portfolioPositions = pgTable("portfolio_positions", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   idxPortfolioId: index("idx_portfolio_positions_portfolio_id").on(t.portfolioId),
+}));
+
+export const portfolioTransactions = pgTable("portfolio_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  portfolioId: uuid("portfolio_id")
+    .notNull()
+    .references(() => portfolios.id, { onDelete: "cascade" }),
+  ticker: varchar("ticker", { length: 50 }).notNull(),
+  transactionType: varchar("transaction_type", { length: 20 }).notNull(), // buy, sell
+  shares: numeric("shares", { precision: 30, scale: 10 }).notNull(),
+  price: numeric("price", { precision: 20, scale: 10 }).notNull(),
+  totalValue: numeric("total_value", { precision: 30, scale: 2 }).notNull(),
+  transactionDate: timestamp("transaction_date", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  idxPortfolioId: index("idx_portfolio_transactions_portfolio_id").on(t.portfolioId),
+  idxTransactionDate: index("idx_portfolio_transactions_date").on(t.transactionDate),
+}));
+
+export const portfolioDividends = pgTable("portfolio_dividends", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  portfolioId: uuid("portfolio_id")
+    .notNull()
+    .references(() => portfolios.id, { onDelete: "cascade" }),
+  ticker: varchar("ticker", { length: 50 }).notNull(),
+  amount: numeric("amount", { precision: 30, scale: 2 }).notNull(),
+  exDate: timestamp("ex_date", { withTimezone: true }).notNull(),
+  payDate: timestamp("pay_date", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  idxPortfolioId: index("idx_portfolio_dividends_portfolio_id").on(t.portfolioId),
+  idxExDate: index("idx_portfolio_dividends_ex_date").on(t.exDate),
+}));
+
+export const dailyPrices = pgTable("daily_prices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticker: varchar("ticker", { length: 50 }).notNull(),
+  priceDate: timestamp("price_date", { withTimezone: true }).notNull(),
+  closePrice: numeric("close_price", { precision: 20, scale: 10 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  uniqueTickerDate: uniqueIndex("idx_daily_prices_ticker_date").on(t.ticker, t.priceDate),
+  idxTicker: index("idx_daily_prices_ticker").on(t.ticker),
+  idxPriceDate: index("idx_daily_prices_date").on(t.priceDate),
+}));
+
+export const portfolioThemeMappings = pgTable("portfolio_theme_mappings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  portfolioId: uuid("portfolio_id")
+    .notNull()
+    .references(() => portfolios.id, { onDelete: "cascade" }),
+  ticker: varchar("ticker", { length: 50 }).notNull(),
+  themeSlug: varchar("theme_slug", { length: 255 }).notNull(),
+  weight: numeric("weight", { precision: 10, scale: 5 }).notNull().default("1.0"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  idxPortfolioId: index("idx_portfolio_theme_mappings_portfolio_id").on(t.portfolioId),
+  idxTicker: index("idx_portfolio_theme_mappings_ticker").on(t.ticker),
 }));
 
 export const watchlistItems = pgTable("watchlist_items", {
