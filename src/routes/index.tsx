@@ -37,6 +37,7 @@ export default function Home() {
         <p>SupplyAtlas connects companies, themes, sources, and evidence into a database-backed research graph.</p>
         <div class="hero-actions">
           <a href="/themes" class="btn btn-primary btn-lg">Browse themes</a>
+          <a href="/portfolio" class="btn btn-lg">Upload portfolio</a>
         </div>
       </section>
 

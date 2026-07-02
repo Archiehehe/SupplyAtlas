@@ -193,6 +193,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .justify-between { justify-content: space-between; }
 .space-x-4 > * + * { margin-left: 16px; }
 .space-y-2 > * + * { margin-top: 8px; }
+.space-y-3 > * + * { margin-top: 12px; }
 .space-y-4 > * + * { margin-top: 16px; }
 .p-4 { padding: 16px; }
 .p-8 { padding: 32px; }
