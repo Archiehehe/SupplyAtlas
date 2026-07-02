@@ -1,4 +1,4 @@
-import { createSignal, Show, For, createMemo } from "solid-js";
+import { createSignal, Show, For, createMemo, onMount } from "solid-js";
 import { SectionCard } from "../SectionCard";
 import { StatusBadge } from "../StatusBadge";
 import { EmptyState } from "../EmptyState";
@@ -10,14 +10,15 @@ import {
 } from "../../lib/portfolio/analyzeUploadedPortfolio";
 
 const STAGE_LABELS: Record<string, string> = {
-  idle: "Waiting for file",
-  reading: "Reading file...",
-  read: "File read complete",
-  parsing: "Parsing CSV...",
-  parsed: "CSV parsed",
-  matching: "Matching holdings against SupplyAtlas graph...",
-  matched: "Analysis complete",
-  error: "Error encountered",
+  idle: "idle",
+  reading: "reading",
+  read: "read",
+  parsing: "parsing",
+  parsed: "parsed",
+  matching: "matching",
+  matched: "matched",
+  "file-selected": "file-selected",
+  error: "error",
 };
 
 interface Props {
@@ -25,23 +26,38 @@ interface Props {
 }
 
 export default function PortfolioUploadAnalyzer(props: Props) {
+  const [changeCount, setChangeCount] = createSignal(0);
   const [selectedFileName, setSelectedFileName] = createSignal<string | null>(null);
-  const [stage, setStage] = createSignal<"idle" | "reading" | "read" | "parsing" | "parsed" | "matching" | "matched" | "error">("idle");
+  const [stage, setStage] = createSignal<string>("idle");
   const [parseResult, setParseResult] = createSignal<ParseResult | null>(null);
   const [analysisResult, setAnalysisResult] = createSignal<PortfolioExposureAnalysis | null>(null);
   const [error, setError] = createSignal<string | null>(null);
 
-  const handleFileChange = async (event: Event) => {
+  let fileInputRef: HTMLInputElement | undefined;
+
+  onMount(() => {
+    if (fileInputRef) {
+      fileInputRef.addEventListener("change", handleFileEvent);
+    }
+  });
+
+  const handleFileEvent = (event: Event) => {
+    setChangeCount((n) => n + 1);
+    handleFileChange(event);
+  };
+
+  async function handleFileChange(event: Event) {
     try {
       setError(null);
       setAnalysisResult(null);
       setParseResult(null);
+      setStage("file-selected");
 
-      const input = event.currentTarget as HTMLInputElement;
+      const input = event.target as HTMLInputElement;
       const file = input.files?.[0];
 
       if (!file) {
-        setError("No file selected.");
+        setError("No file found from input event.");
         setStage("error");
         return;
       }
@@ -52,7 +68,6 @@ export default function PortfolioUploadAnalyzer(props: Props) {
       const text = await file.text();
 
       setStage("read");
-      setStage("parsing");
 
       const parsed = parseUploadedPortfolioCSV(text);
       setParseResult(parsed);
@@ -62,6 +77,10 @@ export default function PortfolioUploadAnalyzer(props: Props) {
         setError(parsed.errors.join("; "));
         setStage("error");
         return;
+      }
+
+      if (parsed.errors.length > 0) {
+        setError(parsed.errors.join("; "));
       }
 
       const symbols = parsed.holdings.map((h) => h.symbol);
@@ -87,8 +106,7 @@ export default function PortfolioUploadAnalyzer(props: Props) {
       }
 
       if (!contentType.includes("application/json")) {
-        const textBody = await response.text();
-        throw new Error(`Exposure matching returned non-JSON response (${contentType || "unknown"}). First 200 chars: ${textBody.slice(0, 200)}`);
+        throw new Error(`Exposure matching returned non-JSON: ${contentType}`);
       }
 
       const mapping: ExposureMappingsResult = await response.json();
@@ -100,7 +118,7 @@ export default function PortfolioUploadAnalyzer(props: Props) {
       setError(message);
       setStage("error");
     }
-  };
+  }
 
   const reset = () => {
     setSelectedFileName(null);
@@ -108,6 +126,7 @@ export default function PortfolioUploadAnalyzer(props: Props) {
     setParseResult(null);
     setAnalysisResult(null);
     setError(null);
+    if (fileInputRef) fileInputRef.value = "";
   };
 
   const totalCostBasis = createMemo(() => parseResult()?.totalCostBasis ?? 0);
@@ -118,37 +137,59 @@ export default function PortfolioUploadAnalyzer(props: Props) {
   const mappedCount = createMemo(() => analysisResult()?.matchedHoldings.length ?? 0);
   const unmappedCountParsed = createMemo(() => analysisResult()?.unmappedHoldings.length ?? 0);
 
-  const stageText = createMemo(() => STAGE_LABELS[stage()] ?? stage());
-
   return (
     <div>
-      <Show when={stage() === "idle"}>
-        <div class={`upload-section ${props.compact ? "upload-section-compact" : ""}`}>
-          <div class="card upload-card">
-            <div class="upload-icon">&#128196;</div>
-            <h3>Upload Holdings CSV</h3>
-            <p class="text-secondary">Required column headers: <code>symbol</code>, <code>quantity</code>, <code>cost</code>, <code>date</code> &mdash; the standard Seeking Alpha portfolio export format.</p>
-            <p class="text-secondary" style="margin-top: 4px;">Legacy column names (<code>ticker</code>, <code>shares</code>, <code>market_value</code>) are also accepted.</p>
-            <input type="file" accept=".csv,text/csv" onChange={handleFileChange} class="upload-input" />
+      <div class="diagnostic-panel">
+        <div class="diagnostic-panel-header">Upload status</div>
+        <div class="diagnostic-panel-body">
+          <div class="diagnostic-row">
+            <span class="diag-label">change count</span>
+            <span class="diag-value">{changeCount()}</span>
           </div>
-          <p class="privacy-note">Your file is parsed in-browser for this session only. SupplyAtlas does not store uploaded portfolio files or holdings.</p>
+          <div class="diagnostic-row">
+            <span class="diag-label">selected file</span>
+            <span class="diag-value">{selectedFileName() ?? "none"}</span>
+          </div>
+          <div class="diagnostic-row">
+            <span class="diag-label">stage</span>
+            <span class="diag-value">{STAGE_LABELS[stage()] ?? stage()}</span>
+          </div>
+          <div class="diagnostic-row">
+            <span class="diag-label">lots parsed</span>
+            <span class="diag-value">{lotCount()}</span>
+          </div>
+          <div class="diagnostic-row">
+            <span class="diag-label">holdings parsed</span>
+            <span class="diag-value">{holdings().length}</span>
+          </div>
+          <div class="diagnostic-row">
+            <span class="diag-label">analysis present</span>
+            <span class="diag-value">{analysisResult() !== null ? "yes" : "no"}</span>
+          </div>
+          <div class="diagnostic-row">
+            <span class="diag-label">error</span>
+            <span class="diag-value diag-error">{error() ?? "none"}</span>
+          </div>
         </div>
-      </Show>
-
-      <Show when={selectedFileName() !== null && stage() !== "idle"}>
-        <div class="stage-panel">
-          <div class="stage-panel-row">
-            <span class="stage-panel-label">Selected file:</span>
-            <span class="stage-panel-value">{selectedFileName()}</span>
-          </div>
-          <div class="stage-panel-row">
-            <span class="stage-panel-label">Status:</span>
-            <span class="stage-panel-value stage-panel-status-{stage()}">{stageText()}</span>
-          </div>
+        <div class="diagnostic-actions">
+          <button type="button" class="btn btn-sm" onClick={() => { setStage("clicked"); setChangeCount((n) => n + 1); }}>
+            Test interactivity
+          </button>
         </div>
-      </Show>
+      </div>
 
-      <Show when={warnings().length > 0 && stage() !== "idle" && stage() !== "reading" && stage() !== "read" && stage() !== "parsing"}>
+      <div class={`upload-section ${props.compact ? "upload-section-compact" : ""}`}>
+        <div class="card upload-card">
+          <div class="upload-icon">&#128196;</div>
+          <h3>Upload Holdings CSV</h3>
+          <p class="text-secondary">Required column headers: <code>symbol</code>, <code>quantity</code>, <code>cost</code>, <code>date</code> &mdash; the standard Seeking Alpha portfolio export format.</p>
+          <p class="text-secondary" style="margin-top: 4px;">Legacy column names (<code>ticker</code>, <code>shares</code>, <code>market_value</code>) are also accepted.</p>
+          <input type="file" accept=".csv,text/csv" class="upload-input" ref={fileInputRef} />
+        </div>
+        <p class="privacy-note">Your file is parsed in-browser for this session only. SupplyAtlas does not store uploaded portfolio files or holdings.</p>
+      </div>
+
+      <Show when={warnings().length > 0 && stage() !== "idle" && stage() !== "reading" && stage() !== "file-selected"}>
         <div class="warnings-panel" style="margin-top: 16px;">
           <h3>Parse Warnings</h3>
           <ul><For each={warnings()}>{(w) => <li>{w}</li>}</For></ul>
@@ -156,7 +197,7 @@ export default function PortfolioUploadAnalyzer(props: Props) {
       </Show>
 
       <Show when={error() !== null}>
-        <div class="error-panel">
+        <div class="error-panel" style="margin-top: 16px;">
           <h3>Error</h3>
           <p>{error()}</p>
           <button onClick={reset} class="btn btn-sm" style="margin-top: 12px;">Try again</button>
@@ -389,7 +430,7 @@ export default function PortfolioUploadAnalyzer(props: Props) {
           <div class="warnings-panel" style="margin-top: 24px;">
             <h3>Unmapped Tickers ({analysisResult()!.unmappedHoldings.length})</h3>
             <p class="text-xs text-secondary" style="margin-bottom: 8px;">
-              These tickers were not found in the SupplyAtlas company database. Import company/theme coverage to map these tickers.
+              These tickers were not found in the SupplyAtlas company database.
             </p>
             <div class="flex flex-wrap gap-2" style="margin-top: 8px;">
               <For each={analysisResult()!.unmappedHoldings}>{(u) => <span class="badge badge-yellow">{u.symbol}</span>}</For>
@@ -401,7 +442,7 @@ export default function PortfolioUploadAnalyzer(props: Props) {
           <div style="margin-top: 24px;">
             <EmptyState
               title="No exposures found"
-              description="None of the tickers in your portfolio were found in the SupplyAtlas company database. Import company/theme coverage to map these tickers."
+              description="None of the tickers in your portfolio were found in the SupplyAtlas company database."
             />
           </div>
         </Show>
