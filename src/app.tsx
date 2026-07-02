@@ -14,6 +14,8 @@ export default function App() {
           </Suspense>
         </AppShell>
       )}
-    />
+    >
+      <FileRoutes />
+    </Router>
   );
 }

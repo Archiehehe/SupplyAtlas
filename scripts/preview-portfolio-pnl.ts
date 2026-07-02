@@ -5,8 +5,11 @@
  *   npm run portfolio:pnl -- --portfolio <key> --start 2026-01-01 --end 2026-07-01 --mode period
  *   npm run portfolio:pnl -- --portfolio <key> --start 2026-01-01 --end 2026-07-01 --mode since-buy
  */
-import "dotenv/config";
-import { calculatePortfolioSubthemePnl } from "../src/lib/portfolio/calculateSubthemePnl";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+
+type PnlModule = typeof import("../src/lib/portfolio/calculateSubthemePnl");
+let calculatePortfolioSubthemePnl: PnlModule["calculatePortfolioSubthemePnl"];
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -41,6 +44,8 @@ function formatPerDay(value: number | null): string {
 }
 
 async function main() {
+  const mod = await import("../src/lib/portfolio/calculateSubthemePnl");
+  calculatePortfolioSubthemePnl = mod.calculatePortfolioSubthemePnl;
   const args = parseArgs();
 
   if (args.help || !args.portfolio) {
