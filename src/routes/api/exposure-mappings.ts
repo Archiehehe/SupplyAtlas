@@ -1,4 +1,3 @@
-import { defineEventHandler, readBody } from "h3";
 import { getDb } from "../../db/client";
 import {
   companies,
@@ -13,9 +12,9 @@ import {
 import { eq, inArray, and, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
-export default defineEventHandler(async (event) => {
-  const body = await readBody<{ tickers?: string[] }>(event);
-  const tickers = body?.tickers ?? [];
+export const POST = async (event: { request: Request }) => {
+  const body = await event.request.json();
+  const tickers: string[] = body?.tickers ?? [];
   if (tickers.length === 0) {
     return { exposures: [] };
   }
@@ -171,4 +170,4 @@ export default defineEventHandler(async (event) => {
   });
 
   return { exposures };
-});
+};

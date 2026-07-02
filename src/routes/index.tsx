@@ -7,7 +7,7 @@ const loadStats = query(async () => {
   const { getDb } = await import("../db/client");
   const db = getDb();
   if (!db) return null;
-  const { themes, companies, nodes, edges, sourceDocuments, edgeEvidence, portfolios } = await import("../db/schema");
+  const { themes, companies, nodes, edges, sourceDocuments, edgeEvidence } = await import("../db/schema");
   const { count, eq } = await import("drizzle-orm");
   const [themeCount] = await db.select({ count: count() }).from(themes).where(eq(themes.type, "thematic"));
   const [companyCount] = await db.select({ count: count() }).from(companies);
@@ -15,7 +15,6 @@ const loadStats = query(async () => {
   const [edgeCount] = await db.select({ count: count() }).from(edges);
   const [docCount] = await db.select({ count: count() }).from(sourceDocuments);
   const [evCount] = await db.select({ count: count() }).from(edgeEvidence);
-  const [portfolioCount] = await db.select({ count: count() }).from(portfolios);
   return {
     themes: Number(themeCount.count),
     companies: Number(companyCount.count),
@@ -23,7 +22,6 @@ const loadStats = query(async () => {
     edges: Number(edgeCount.count),
     documents: Number(docCount.count),
     evidence: Number(evCount.count),
-    portfolios: Number(portfolioCount.count),
   };
 }, "home-stats");
 
@@ -33,11 +31,11 @@ export default function Home() {
   return (
     <div>
       <section class="hero">
-        <h1>Map investment exposure across supply chains.</h1>
-        <p>SupplyAtlas connects companies, themes, sources, and evidence into a database-backed research graph.</p>
+        <h1>Start with a holdings CSV. SupplyAtlas maps your tickers to investment themes, subthemes, companies, relationships, and evidence.</h1>
+        <p>Upload a portfolio to see live exposure analysis from the SupplyAtlas research graph &mdash; or browse coverage areas below.</p>
         <div class="hero-actions">
-          <a href="/themes" class="btn btn-primary btn-lg">Browse themes</a>
-          <a href="/portfolio" class="btn btn-lg">Upload portfolio</a>
+          <a href="/portfolio" class="btn btn-primary btn-lg">Upload portfolio</a>
+          <a href="/themes" class="btn btn-lg">Browse themes</a>
         </div>
       </section>
 
@@ -49,36 +47,35 @@ export default function Home() {
       ) : (
         <Suspense fallback={<div class="p-8 skeleton skeleton-card" />}>
           {stats() ? (
-            <div class="stats-grid">
-              <div class="card stat-card">
-                <div class="stat-value">{stats()!.themes}</div>
-                <div class="stat-label">Themes</div>
+            <>
+              <div class="section-label">Database Coverage</div>
+              <div class="stats-grid">
+                <div class="card stat-card">
+                  <div class="stat-value">{stats()!.themes}</div>
+                  <div class="stat-label">Themes</div>
+                </div>
+                <div class="card stat-card">
+                  <div class="stat-value">{stats()!.companies}</div>
+                  <div class="stat-label">Companies</div>
+                </div>
+                <div class="card stat-card">
+                  <div class="stat-value">{stats()!.nodes}</div>
+                  <div class="stat-label">Nodes</div>
+                </div>
+                <div class="card stat-card">
+                  <div class="stat-value">{stats()!.edges}</div>
+                  <div class="stat-label">Relationships</div>
+                </div>
+                <div class="card stat-card">
+                  <div class="stat-value">{stats()!.documents}</div>
+                  <div class="stat-label">Source Documents</div>
+                </div>
+                <div class="card stat-card">
+                  <div class="stat-value">{stats()!.evidence}</div>
+                  <div class="stat-label">Evidence Items</div>
+                </div>
               </div>
-              <div class="card stat-card">
-                <div class="stat-value">{stats()!.companies}</div>
-                <div class="stat-label">Companies</div>
-              </div>
-              <div class="card stat-card">
-                <div class="stat-value">{stats()!.nodes}</div>
-                <div class="stat-label">Nodes</div>
-              </div>
-              <div class="card stat-card">
-                <div class="stat-value">{stats()!.edges}</div>
-                <div class="stat-label">Relationships</div>
-              </div>
-              <div class="card stat-card">
-                <div class="stat-value">{stats()!.documents}</div>
-                <div class="stat-label">Source Documents</div>
-              </div>
-              <div class="card stat-card">
-                <div class="stat-value">{stats()!.evidence}</div>
-                <div class="stat-label">Evidence Items</div>
-              </div>
-              <div class="card stat-card">
-                <div class="stat-value">{stats()!.portfolios}</div>
-                <div class="stat-label">Portfolios</div>
-              </div>
-            </div>
+            </>
           ) : (
             <EmptyState
               title="Could not load database stats"
