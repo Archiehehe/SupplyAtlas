@@ -1,109 +1,68 @@
-# Portfolio P&L by Subtheme
+# Portfolio Exposure Analysis
 
 ## Purpose
 
-SupplyAtlas portfolio analytics answer:
+SupplyAtlas portfolio analysis maps uploaded holdings against the investment theme graph:
 
-- Which themes and subthemes drive my portfolio returns?
-- Which positions are responsible for the return?
-- Is the return from price movement, dividends, realized gains, or holding-period velocity?
-- Which exposures are helping or hurting?
+- Which themes do my holdings expose me to?
+- What companies map to my tickers?
+- What supply-chain relationships connect my holdings?
+- What evidence supports those relationships?
 
-## Routes
+Upload a CSV in-session. No data is stored.
+
+## Route
 
 | Route | Description |
 |-------|-------------|
-| `/portfolio` | Portfolio overview and subtheme P&L selector |
-| `/portfolio/[portfolioKey]/subtheme-pnl` | Subtheme-level P&L breakdown for one portfolio |
+| `/portfolio` | Upload a holdings CSV and view mapped exposure analysis |
 
-Query parameters:
+## Upload Format
 
-| Param | Values | Description |
-|-------|--------|-------------|
-| `start` | `YYYY-MM-DD` | Start of analysis period (default: 90 days ago) |
-| `end` | `YYYY-MM-DD` | End of analysis period (default: today) |
-| `mode` | `period` or `since-buy` | P&L calculation mode |
+Accepted columns:
 
-Preferred URL format: `mode=since-buy`. Internal TypeScript normalizes to `since_buy`.
+| Column | Required | Description |
+|--------|----------|-------------|
+| `ticker` | Yes | Stock ticker symbol (case-insensitive) |
+| `shares` | Yes | Number of shares held |
+| `market_value` | No | Current market value of position |
+| `cost_basis` | No | Total cost basis of position |
+| `average_cost` | No | Average cost per share |
+| `name` | No | Position name (ignored in analysis) |
+| `sector` | No | Position sector (ignored in analysis) |
 
-## P&L Formulas
+## Session-Only Processing
 
-### Period P&L (default)
+- CSV is parsed entirely in the browser.
+- Only ticker symbols are sent to the server for DB exposure matching.
+- No uploaded files or holdings are written to the database.
+- No files are stored on disk or in any storage service.
+- Refreshing the page clears all uploaded data.
 
-```
-Period P&L = Ending Market Value
-           + Sell Proceeds During Period
-           + Dividends During Period
-           - Starting Market Value
-           - Buy Cost During Period
-```
-
-- Buys before the selected period are represented by **starting market value**, not subtracted as buy cost during period.
-- Period P&L measures return generated within the date range regardless of when positions were opened.
-
-### Since Buy / Lifetime P&L
+## Architecture
 
 ```
-Since Buy P&L = Ending Market Value
-              + All Realized Sell Proceeds
-              + All Dividends
-              - Total Cost Basis
+Browser: parse CSV → extract tickers → send to server
+Server:  look up companies by ticker → find theme exposures → find related edges/evidence → return mappings
+Browser: compute theme weights → display results
 ```
 
-- Measures total return from initial purchase to today.
-- Requires complete cost basis data. Missing cost basis produces warnings, not fake values.
-- Since-buy P&L is separate from period P&L. Do not mix these modes.
+## Database Tables Used (read-only)
 
-### Components
-
-| Component | Period | Since Buy |
-|-----------|--------|-----------|
-| Price P&L | `endingMV - startingMV - buyCost + sellProceeds` | `endingMV + sellProceeds - totalCostBasis` |
-| Dividend P&L | dividends received during period | all dividends ever received |
-| Realized P&L | `sellProceeds - buyCost` (gross realized) | all realized sell proceeds |
-| P&L/day | period P&L divided by days in range | since-buy P&L divided by days held |
-
-## Data Requirements
-
-The following tables must be populated via import batches:
-
-| Table | Description |
-|-------|-------------|
-| `portfolios` | Portfolio definitions with a unique key |
-| `portfolio_positions` | Current holdings with market value |
-| `portfolio_transactions` | Buy/sell transactions with dates, prices, quantities |
-| `portfolio_dividends` | Dividend payments with dates and amounts |
-| `daily_prices` | Historical price data for return % and per-day calculations |
-| `portfolio_theme_mappings` | Position-to-theme/subtheme mapping |
-| `themes`, `nodes`, `edges`, `edge_evidence` | Theme graph data for exposure attribution |
-
-## Import Workflow
-
-```bash
-# Validate a batch
-npm run import:validate -- --batch <batch-name>
-
-# Dry-run to see planned operations
-npm run import:data -- --batch <batch-name> --dry-run
-
-# Run the import
-npm run import:data -- --batch <batch-name>
-```
-
-- Import batch files must stay gitignored.
-- No personal identifiers, account numbers, or secrets in batch files.
-- Import requires `DIRECT_DATABASE_URL` in `.env.local`.
-- Runtime rendering only needs `DATABASE_URL`.
+| Table | Purpose |
+|-------|---------|
+| `company_identifiers` | Map uploaded ticker to company ID |
+| `companies` | Company name, sector |
+| `company_exposures` | Theme exposure scores per company |
+| `themes` | Theme names and slugs |
+| `nodes` | Graph nodes linked to companies |
+| `edges` | Relationships between nodes |
+| `edge_evidence` | Supporting evidence quotes for edges |
+| `source_documents` | Document titles for evidence attribution |
 
 ## CLI Tools
 
 ```bash
-# Period P&L
-npm run portfolio:pnl -- --portfolio <key> --start YYYY-MM-DD --end YYYY-MM-DD --mode period
-
-# Since Buy P&L
-npm run portfolio:pnl -- --portfolio <key> --start YYYY-MM-DD --end YYYY-MM-DD --mode since-buy
-
 # Check P&L formulas (pure math, no DB)
 npm run portfolio:pnl:check
 ```
@@ -113,6 +72,6 @@ npm run portfolio:pnl:check
 - SupplyAtlas is public, read-only, and accountless.
 - No authentication, no admin, no watchlist.
 - No provider API calls from UI components.
-- No browser writes or browser forms.
-- No fake fallback data for missing cost basis.
+- No browser writes or browser forms that persist to DB.
+- No fake fallback data.
 - No Vercel Cron Jobs or scheduled background jobs.
